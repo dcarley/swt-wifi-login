@@ -16,3 +16,10 @@ Login:
 ```
 swt-wifi-login <username> <password>
 ```
+
+If you're using Mac OS X, you can disable the graphical prompt with:
+```
+sudo defaults write \
+  /Library/Preferences/SystemConfiguration/com.apple.captive.control \
+  Active -boolean false
+```
