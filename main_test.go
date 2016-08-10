@@ -8,6 +8,8 @@ import (
 
 	"net/http"
 	"testing"
+
+	"github.com/onsi/gomega/ghttp"
 )
 
 func TestSwtWifiLogin(t *testing.T) {
@@ -50,6 +52,95 @@ var _ = Describe("SwtWifiLogin", func() {
 
 		It("sets password query param as hash", func() {
 			Expect(req.URL.Query().Get("password")).To(Equal(PasswordHash))
+		})
+	})
+
+	Describe("Login", func() {
+		var (
+			client       *http.Client
+			server       *ghttp.Server
+			request      *http.Request
+			responseCode int
+			responseBody string
+		)
+
+		BeforeEach(func() {
+			client = &http.Client{}
+			server = ghttp.NewServer()
+
+			var err error
+			request, err = LoginRequest(Username, Password, server.URL()+"/")
+			Expect(err).ToNot(HaveOccurred())
+
+			headers := http.Header{}
+			headers.Set("Content-type", "application/json")
+
+			server.AppendHandlers(
+				ghttp.CombineHandlers(
+					ghttp.VerifyRequest("GET", request.URL.Path),
+					ghttp.RespondWithPtr(&responseCode, &responseBody, headers),
+				),
+			)
+		})
+
+		AfterEach(func() {
+			server.Close()
+		})
+
+		Context("200 status code and 0 errorcode", func() {
+			BeforeEach(func() {
+				responseCode = http.StatusOK
+				responseBody = `{"errorcode": 0}`
+			})
+
+			It("returns no errors", func() {
+				Expect(Login(request, client)).To(Succeed())
+			})
+		})
+
+		Context("200 status code and non-0 errorcode", func() {
+			BeforeEach(func() {
+				responseCode = http.StatusOK
+				responseBody = `{"errorcode": 101}`
+			})
+
+			It("returns an error with status code and response body", func() {
+				Expect(
+					Login(request, client),
+				).To(
+					MatchError(LoginError{responseCode, responseBody}),
+				)
+			})
+		})
+
+		Context("non-200 status code and unparseable response body", func() {
+			BeforeEach(func() {
+				responseCode = http.StatusServiceUnavailable
+				responseBody = `there was a problem`
+			})
+
+			It("returns an error with status code and response body", func() {
+				Expect(
+					Login(request, client),
+				).To(
+					MatchError(LoginError{responseCode, responseBody}),
+				)
+			})
+		})
+
+		Context("200 status code and unparseable response body", func() {
+			BeforeEach(func() {
+				responseCode = http.StatusOK
+				responseBody = `there was a problem`
+			})
+
+			It("returns an error with JSON decoder details", func() {
+				Expect(
+					Login(request, client),
+				).To(
+					MatchError(ContainSubstring("invalid character")),
+				)
+			})
 		})
 	})
 })
