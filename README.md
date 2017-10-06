@@ -16,6 +16,13 @@ Login:
 swt-wifi-login <username> <password>
 ```
 
+The portal doesn't always work first time so the utility will keep retrying:
+```
+2017/10/06 08:41:49 login failed: Get http://swt.passengerwifi.com/cws/?password=REDACTED&rq=login&username=REDACTED: net/http: timeout awaiting response headers
+2017/10/06 08:41:49 sleeping for: 5s
+2017/10/06 08:42:02 login successful!
+```
+
 If you're using Mac OS X, you can disable the graphical prompt with:
 ```
 sudo defaults write \
