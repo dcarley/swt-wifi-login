@@ -8,7 +8,7 @@ A command-line utility to log in to the [WiFi on South Western Railway][swr] (n√
 
 Fetch, build, and install:
 ```
-go install github.com/dcarley/swt-wifi-login
+go get -u github.com/dcarley/swt-wifi-login
 ```
 
 Login:
